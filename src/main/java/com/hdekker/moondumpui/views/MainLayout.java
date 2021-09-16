@@ -1,9 +1,11 @@
-package com.hdekker.views;
+package com.hdekker.moondumpui.views;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.hdekker.moondumpui.views.MainLayout;
+import com.hdekker.moondumpui.views.helloworld.HelloWorldView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.Text;
@@ -29,8 +31,6 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
-import com.hdekker.views.MainLayout;
-import com.hdekker.views.helloworld.HelloWorldView;
 import com.vaadin.flow.component.avatar.Avatar;
 
 /**
