@@ -10,8 +10,6 @@ import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
 import com.hdekker.moondumpui.state.SessionState;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -20,40 +18,35 @@ import com.vaadin.flow.router.Route;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
 
-@Route("apply-indicator")
-public class ApplyIndicator extends BaseDynamoDBSinglePageCard implements BeforeEnterObserver {
+@Route("apply-alert")
+public class ApplyAlert extends BaseDynamoDBSinglePageCard implements BeforeEnterObserver{
 
-	Label interfaceName;
-	H2 assetName;
-	Grid<Map<String, AttributeValue>> selectIndicator;
+	Grid<Map<String, AttributeValue>> selectAlert;
 	
-	public ApplyIndicator(DatabaseConfig dbc, SessionState state) {
+	public ApplyAlert(DatabaseConfig dbc, SessionState state) {
 		super(dbc, state);
 		
-		interfaceName = new Label();
-		assetName = new H2();
-		
-		selectIndicator = new Grid<>();
-		selectIndicator.addColumn(m->m.get(DynDBKeysAndAttributeNamesSpec.INDICATOR_DESCRIPTOR_FNNAME).s()).setHeader("Apply an Indicator");
-		selectIndicator.addItemClickListener((e)->{
-			
-			state.setTransformName(Optional.of(e.getItem().get(dbc.getSortKey()).s()));
-			UI.getCurrent().navigate(SelectIndicatorProperties.class);
-			
+
+		selectAlert = new Grid<>();
+		selectAlert.addColumn(m->m.get(DynDBKeysAndAttributeNamesSpec.INDICATOR_DESCRIPTOR_FNNAME).s()).setHeader("Apply Alert");
+		selectAlert.addItemClickListener((e)->{
+			state.setAlertName(Optional.of(e.getItem().get(dbc.getSortKey()).s()));
+			UI.getCurrent().navigate(SelectAlertProperties.class);
 		});
 		
+		add(selectAlert);
 		
-		add(interfaceName);
-		add(assetName);
-		add(selectIndicator);
+	}
+
+	@Override
+	public void beforeEnter(BeforeEnterEvent event) {
+		
+		state.getProperties().ifPresentOrElse((e)->{}, ()-> event.forwardTo(SampleInterfaceSelector.class));
 		
 	}
 
 	@Override
 	public void afterNavigation(AfterNavigationEvent event) {
-		
-		interfaceName.setText("Source: " + state.getInterfaceName().get());
-		assetName.setText(state.getAssetName().get());
 		
 		CompletableFuture<QueryResponse> itemFuture = client.query(builder->{
 			
@@ -63,7 +56,7 @@ public class ApplyIndicator extends BaseDynamoDBSinglePageCard implements Before
 					.build(),
 					":skval",
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_DISCRIPTOR_TRANSFORMS)
+						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_DISCRIPTOR_ALERTS)
 						.build()
 					));
 			builder.projectionExpression(
@@ -75,11 +68,11 @@ public class ApplyIndicator extends BaseDynamoDBSinglePageCard implements Before
 		
 		itemFuture.thenAccept(list->{
 			
-			selectIndicator.getUI().get()
+			selectAlert.getUI().get()
 				.access(()->{
 					
-					selectIndicator.setItems(list.items());	
-					selectIndicator.getUI().get().push();
+					selectAlert.setItems(list.items());	
+					selectAlert.getUI().get().push();
 					
 				});
 			
@@ -88,11 +81,6 @@ public class ApplyIndicator extends BaseDynamoDBSinglePageCard implements Before
 		
 	}
 
-	@Override
-	public void beforeEnter(BeforeEnterEvent event) {
-		
-		state.getAssetName().ifPresentOrElse((e)->{}, ()-> event.forwardTo(SampleInterfaceSelector.class));
-		
-	}
-
+	
+	
 }

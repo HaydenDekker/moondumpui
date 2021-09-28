@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.hdekker.mobileapp.templates.SinglePageCard;
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
+import com.hdekker.moondumpui.state.SessionState;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.router.AfterNavigationObserver;

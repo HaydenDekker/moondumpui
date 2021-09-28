@@ -6,7 +6,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.dyndb.types.ui.events.SelectedInterfaceAsset;
+import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
+import com.hdekker.moondumpui.state.SessionState;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.router.AfterNavigationEvent;
@@ -29,7 +30,7 @@ public class SampleAssetSelector extends BaseDynamoDBSinglePageCard implements B
 		assetList.addColumn(String::toString).setHeader("Select Indicated Asset");
 		
 		assetList.addItemClickListener((e)->{
-			state.setSelectedSamplerInterfaceAsset(Optional.of(new SelectedInterfaceAsset(state.getSelectedSamplerInterface().get(), e.getItem())));
+			state.setAssetName(Optional.of(e.getItem()));
 			UI.getCurrent().navigate(ApplyIndicator.class);
 		});
 		
@@ -46,11 +47,11 @@ public class SampleAssetSelector extends BaseDynamoDBSinglePageCard implements B
 			builder.key(Map.of(
 					dbc.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(SampleInterfaceSelector.SAMPLER_INTERFACE_KEYS)
+						.s(DynDBKeysAndAttributeNamesSpec.SAMPLER_INTERFACE_KEYS)
 						.build(),
 					dbc.getSortKey(),
 					AttributeValue.builder()
-						.s(state.getSelectedSamplerInterface().get())
+						.s(state.getInterfaceName().get())
 						.build())
 				);
 			
@@ -74,7 +75,7 @@ public class SampleAssetSelector extends BaseDynamoDBSinglePageCard implements B
 	@Override
 	public void beforeEnter(BeforeEnterEvent event) {
 		
-		state.getSelectedSamplerInterface().ifPresentOrElse((i)->{}, ()-> event.forwardTo(SampleInterfaceSelector.class));
+		state.getInterfaceName().ifPresentOrElse((i)->{}, ()-> event.forwardTo(SampleInterfaceSelector.class));
 
 	}
 

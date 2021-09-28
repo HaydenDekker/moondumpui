@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.hdekker.mobileapp.templates.CardList;
 import com.hdekker.mobileapp.templates.SinglePageCard;
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
+import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
 import com.hdekker.moondumpui.dyndb.types.SampleInterfaceConfiguration;
+import com.hdekker.moondumpui.state.SessionState;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.grid.Grid;
@@ -39,8 +41,6 @@ import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
 @Route("sample-interface-selector")
 public class SampleInterfaceSelector extends BaseDynamoDBSinglePageCard{
 
-	public static final String SAMPLER_INTERFACE_KEYS = "SIFKeys";
-
 	Grid<String> interfaceNames;
 	
 	public SampleInterfaceSelector(DatabaseConfig dbc, SessionState state) {
@@ -50,7 +50,7 @@ public class SampleInterfaceSelector extends BaseDynamoDBSinglePageCard{
 		interfaceNames.addColumn(String::toString).setHeader("Sample Source");
 		interfaceNames.addItemClickListener((event)->{
 			
-			state.setSelectedSamplerInterface(Optional.of(event.getItem()));
+			state.setInterfaceName(Optional.of(event.getItem()));
 			UI.getCurrent().navigate(SampleAssetSelector.class);
 
 		});
@@ -66,10 +66,10 @@ public class SampleInterfaceSelector extends BaseDynamoDBSinglePageCard{
 			
 			builder.tableName(dbc.getTableName());
 			builder.expressionAttributeValues(Map.of(":pk", AttributeValue.builder()
-															.s(SAMPLER_INTERFACE_KEYS)
+															.s(DynDBKeysAndAttributeNamesSpec.SAMPLER_INTERFACE_KEYS)
 															.build()));
-			builder.projectionExpression("SK");
-			builder.keyConditionExpression("PK = :pk");
+			builder.projectionExpression(dbc.getSortKey());
+			builder.keyConditionExpression(dbc.getPrimaryKey() + " = :pk");
 			
 		});
 		
