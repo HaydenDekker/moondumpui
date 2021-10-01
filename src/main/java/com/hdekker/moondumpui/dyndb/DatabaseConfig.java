@@ -3,7 +3,7 @@ package com.hdekker.moondumpui.dyndb;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
+@Configuration("uidb")
 @ConfigurationProperties(prefix = "moondump.db")
 public class DatabaseConfig {
 

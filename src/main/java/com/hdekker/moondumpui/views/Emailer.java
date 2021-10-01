@@ -13,6 +13,7 @@ import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
 import com.hdekker.moondumpui.state.SessionState;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.Route;
@@ -26,6 +27,7 @@ public class Emailer extends BaseDynamoDBSinglePageCard{
 	public Emailer(DatabaseConfig dbc, SessionState state) {
 		super(dbc, state);
 		
+		add(new H2("Subscribe to Indicator Alert"));
 		EmailField emailField = new EmailField("Enter email");
 		add(emailField);
 		Button submit = new Button("Subscribe to Indicator");

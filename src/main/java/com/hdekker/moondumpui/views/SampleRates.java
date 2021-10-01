@@ -10,6 +10,8 @@ import com.hdekker.moondumpui.state.SessionState;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -29,6 +31,8 @@ public class SampleRates extends BaseDynamoDBSinglePageCard implements BeforeEnt
 
 	public SampleRates(DatabaseConfig dbc, SessionState state) {
 		super(dbc, state);
+		
+		add(new H2("Select Samples Rates"));
 		
 		CheckboxGroup<String> groupCB = new CheckboxGroup<String>();
 		add(groupCB);
@@ -66,7 +70,6 @@ public class SampleRates extends BaseDynamoDBSinglePageCard implements BeforeEnt
 
 	@Override
 	public void afterNavigation(AfterNavigationEvent event) {
-		// TODO Auto-generated method stub
 		
 	}
 

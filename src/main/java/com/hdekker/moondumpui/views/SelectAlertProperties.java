@@ -29,9 +29,9 @@ public class SelectAlertProperties extends BaseDynamoDBSinglePageCard implements
 	public SelectAlertProperties(DatabaseConfig dbc, SessionState state) {
 		super(dbc, state);
 		
-		add(new H3("Select Indicator Properties"));
+		add(new H3("Configure Alert Properties"));
 		add(holder);
-		holder.setMargin(false);
+		holder.getStyle().set("margin", "0");
 		holder.setPadding(false);
 		holder.setSpacing(false);
 		

@@ -26,16 +26,14 @@ import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 @Route("select-indicator-properties")
 public class SelectIndicatorProperties extends BaseDynamoDBSinglePageCard implements BeforeEnterObserver{
 
-	VerticalLayout holder = new VerticalLayout();
+	Div holder = new Div();
 	
 	public SelectIndicatorProperties(DatabaseConfig dbc, SessionState state) {
 		super(dbc, state);
 		
 		add(new H3("Select Indicator Properties"));
 		add(holder);
-		holder.setMargin(false);
-		holder.setPadding(false);
-		holder.setSpacing(false);
+		holder.getStyle().set("margin", "0");
 		
 		Button nextButton = new Button("Next");
 		

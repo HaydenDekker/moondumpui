@@ -12,7 +12,9 @@ public class EmailerAuthSent extends BaseDynamoDBSinglePageCard{
 	public EmailerAuthSent(DatabaseConfig dbc, SessionState state) {
 		super(dbc, state);
 		
-		add(new Label("Check email"));
+		add(new Label("Thankyou, Please check your email to finish your subscription. "
+				+ "Once your email is confirmed you will be subscribed to your alert. "
+				+ "It may take a few minutes for the subscription email to arrive."));
 		
 	}
 

@@ -8,10 +8,13 @@ import java.util.stream.Collectors;
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
 import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
 import com.hdekker.moondumpui.state.SessionState;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -23,18 +26,21 @@ import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
 @Route("apply-indicator")
 public class ApplyIndicator extends BaseDynamoDBSinglePageCard implements BeforeEnterObserver {
 
-	Label interfaceName;
-	H2 assetName;
 	Grid<Map<String, AttributeValue>> selectIndicator;
+	
+	HorizontalLayout h = new HorizontalLayout();
 	
 	public ApplyIndicator(DatabaseConfig dbc, SessionState state) {
 		super(dbc, state);
 		
-		interfaceName = new Label();
-		assetName = new H2();
+		// style
+		VerticalLayout w = new VerticalLayout();
+		h = new HorizontalLayout();
+		h.setAlignItems(Alignment.BASELINE);
+		w.add(h);
 		
 		selectIndicator = new Grid<>();
-		selectIndicator.addColumn(m->m.get(DynDBKeysAndAttributeNamesSpec.INDICATOR_DESCRIPTOR_FNNAME).s()).setHeader("Apply an Indicator");
+		selectIndicator.addColumn(m->m.get(DynDBKeysAndAttributeNamesSpec.INDICATOR_DESCRIPTOR_FNNAME).s()).setHeader(w);
 		selectIndicator.addItemClickListener((e)->{
 			
 			state.setTransformName(Optional.of(e.getItem().get(dbc.getSortKey()).s()));
@@ -43,8 +49,6 @@ public class ApplyIndicator extends BaseDynamoDBSinglePageCard implements Before
 		});
 		
 		
-		add(interfaceName);
-		add(assetName);
 		add(selectIndicator);
 		
 	}
@@ -52,8 +56,7 @@ public class ApplyIndicator extends BaseDynamoDBSinglePageCard implements Before
 	@Override
 	public void afterNavigation(AfterNavigationEvent event) {
 		
-		interfaceName.setText("Source: " + state.getInterfaceName().get());
-		assetName.setText(state.getAssetName().get());
+		h.add(new Text("Apply an Indicator on " + state.getAssetName().get()));
 		
 		CompletableFuture<QueryResponse> itemFuture = client.query(builder->{
 			
@@ -91,7 +94,8 @@ public class ApplyIndicator extends BaseDynamoDBSinglePageCard implements Before
 	@Override
 	public void beforeEnter(BeforeEnterEvent event) {
 		
-		state.getAssetName().ifPresentOrElse((e)->{}, ()-> event.forwardTo(SampleInterfaceSelector.class));
+		state.getAssetName()
+			.ifPresentOrElse((e)->{}, ()-> event.forwardTo(SampleInterfaceSelector.class));
 		
 	}
 

@@ -22,22 +22,26 @@ public class Summary extends BaseDynamoDBSinglePageCard implements BeforeEnterOb
 	public Summary(DatabaseConfig dbc, SessionState state) {
 		super(dbc, state);
 		
-//		add(new Label(state.getAssetIndicatorProperties()
-//						.get()
-//						.getInterfaceName()));
+		add(new H2("Name Indicator Alert"));
+		
+		//TODO create nice summary
 //		
-//		add(new H2(state.getAssetIndicatorProperties()
-//						.get()
-//						.getAssetName()));
+//		add(new Label("An " + state.getTransformName().get() + " indicator alert will be created for " + state.getAssetName().get() + " from " + state.getInterfaceName().get()));
 //		
-//		add(new Text(state.getAssetIndicatorProperties()
-//						.get()
-//						.getIndicatorApplicationOrder().get(0)));
-//		
+//		add(new Label("The alert " + state.getAlertName().get() + " will be configured with " 
+//				+ state.getProperties()
+//				.get()
+//				.get(state.getAlertName().get())
+//				.entrySet()
+//				.stream()
+//				.map(prop-> "" + prop.getKey() + ": " + prop.getValue())
+//				.reduce((p,n) -> p.concat(". ").concat(n)).get()
+//				
+//		));
 		
 		TextField name = new TextField("Indicator Name");
-		VerticalLayout properties = new VerticalLayout();
-		add(properties, name);
+		// VerticalLayout properties = new VerticalLayout();
+		add(name);
 		
 //		state.getAssetIndicatorProperties()
 //			.get()
