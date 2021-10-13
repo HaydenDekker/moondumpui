@@ -1,7 +1,8 @@
-package com.hdekker.moondumpui.views;
+package com.hdekker.moondumpui.views.onboard;
 
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
 import com.hdekker.moondumpui.state.SessionState;
+import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.Route;

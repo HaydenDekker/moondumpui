@@ -17,12 +17,12 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 public abstract class BaseDynamoDBSinglePageCard extends SinglePageCard implements AfterNavigationObserver{
 
 	@Autowired
-	DatabaseConfig dbc;
+	protected DatabaseConfig dbc;
 	
 	public final DynamoDbAsyncClient client;
 	
 	@Autowired
-	SessionState state;
+	protected SessionState state;
 	
 	public BaseDynamoDBSinglePageCard(DatabaseConfig dbc, SessionState state) {
 		

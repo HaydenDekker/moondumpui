@@ -1,4 +1,4 @@
-package com.hdekker.moondumpui.views;
+package com.hdekker.moondumpui.views.onboard;
 
 import java.util.Map;
 import java.util.Optional;
@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
 import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
 import com.hdekker.moondumpui.state.SessionState;
+import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;

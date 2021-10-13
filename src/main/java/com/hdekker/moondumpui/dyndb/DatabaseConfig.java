@@ -11,7 +11,35 @@ public class DatabaseConfig {
 	public String primaryKey;
 	public String sortKey;
 	public String region;
+	public String appAdminEmail;
+	public String subscriptionConfmEndpoint;
+	public String emailRegion;
 	
+
+	public String getEmailRegion() {
+		return emailRegion;
+	}
+
+	public void setEmailRegion(String emailRegion) {
+		this.emailRegion = emailRegion;
+	}
+
+	public String getSubscriptionConfmEndpoint() {
+		return subscriptionConfmEndpoint;
+	}
+
+	public void setSubscriptionConfmEndpoint(String subscriptionConfmEndpoint) {
+		this.subscriptionConfmEndpoint = subscriptionConfmEndpoint;
+	}
+
+	public String getAppAdminEmail() {
+		return appAdminEmail;
+	}
+
+	public void setAppAdminEmail(String appAdminEmail) {
+		this.appAdminEmail = appAdminEmail;
+	}
+
 	public String getTableName() {
 		return tableName;
 	}

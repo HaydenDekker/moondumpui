@@ -1,9 +1,10 @@
-package com.hdekker.moondumpui.views;
+package com.hdekker.moondumpui.views.onboard;
 
 import java.util.Optional;
 
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
 import com.hdekker.moondumpui.state.SessionState;
+import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -57,6 +58,11 @@ public class Summary extends BaseDynamoDBSinglePageCard implements BeforeEnterOb
 		next.addClickListener((e)-> {
 			
 			state.setIndicatorName(Optional.of(name.getValue()));
+			if(name.isEmpty()) {
+				name.setErrorMessage("requires a name");
+				name.setInvalid(true);
+				return;
+			}
 			UI.getCurrent().navigate(Emailer.class);
 		});
 		

@@ -24,6 +24,10 @@ public interface DynDBKeysAndAttributeNamesSpec {
 	 */
 	public static final String ASSET_INDICATOR_CONFIGURATION = "AIC";
 	public static final String INDICATOR_CONFIGURABLE_PROPERTIES_AND_DEFAULTS = "indicatorConfigurablePropertiesAndDefaults";
+	public static final String INDICATOR_SUBSCRIPTION_TEMP = "isub-temp";
 	public static final String INDICATOR_SUBSCRIPTION = "isub";
+	
+	public static final String INDICATOR_UNSUBSCRIBE = "usub";
+	
 	
 }
