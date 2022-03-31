@@ -1,11 +1,11 @@
 package com.hdekker.moondumpui.dyndb;
 
-public class DynDBItemKey {
+public class KeySet {
 
 	final public String PK;
 	final public String SK;
 	
-	public DynDBItemKey(String pK, String sK) {
+	public KeySet(String pK, String sK) {
 		super();
 		PK = pK;
 		SK = sK;

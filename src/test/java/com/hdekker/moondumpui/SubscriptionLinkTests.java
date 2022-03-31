@@ -23,9 +23,11 @@ import com.github.mvysny.kaributesting.v10.Routes;
 import com.github.mvysny.kaributesting.v10.spring.MockSpringServlet;
 import com.github.mvysny.kaributools.RouterUtilsKt;
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
 import com.hdekker.moondumpui.dyndb.Marshalling;
-import com.hdekker.moondumpui.dyndb.types.UserSubscriptionSpec;
+import com.hdekker.moondumpui.dyndb.PrimaryKeySpec;
+import com.hdekker.moondumpui.dyndb.opps.EmailSHARemover;
+import com.hdekker.moondumpui.dyndb.opps.IndicatorSubscriptionRemover;
+import com.hdekker.moondumpui.subscription.IndicatorSubscription;
 import com.hdekker.moondumpui.views.onboard.SampleInterfaceSelector;
 import com.hdekker.moondumpui.views.unsubscribe.Unsubscribe;
 import com.vaadin.flow.component.UI;
@@ -39,7 +41,6 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
-import software.amazon.awssdk.services.ses.SesAsyncClient;
 
 @SpringBootTest
 public class SubscriptionLinkTests {
@@ -85,7 +86,7 @@ public class SubscriptionLinkTests {
 				.build();
 	
 		// add temp test subscription
-		UserSubscriptionSpec uss = new UserSubscriptionSpec(
+		IndicatorSubscription uss = new IndicatorSubscription(
 				"test-asset-sub-conf", 
 				db.getAppAdminEmail(), 
 				Map.of("ind", Map.of("prop1", 0.34)), 
@@ -101,7 +102,7 @@ public class SubscriptionLinkTests {
 		HashMap<String, AttributeValue> withKeys = new HashMap<>(attr);
 		withKeys.put(db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION_TEMP)
+						.s(PrimaryKeySpec.INDICATOR_SUBSCRIPTION_TEMP.getPrimaryKeyValue())
 						.build());
 		withKeys.put(db.getSortKey(),
 					AttributeValue.builder()
@@ -132,7 +133,7 @@ public class SubscriptionLinkTests {
 			b.tableName(db.getTableName());
 			b.key(Map.of(db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION_TEMP)
+						.s(PrimaryKeySpec.INDICATOR_SUBSCRIPTION_TEMP.getPrimaryKeyValue())
 						.build(),
 					db.getSortKey(),
 					AttributeValue.builder()
@@ -147,7 +148,7 @@ public class SubscriptionLinkTests {
 			b.tableName(db.getTableName());
 			b.key(Map.of(db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION)
+						.s(PrimaryKeySpec.INDICATOR_SUBSCRIPTION.getPrimaryKeyValue())
 						.build(),
 					db.getSortKey(),
 					AttributeValue.builder()
@@ -163,7 +164,7 @@ public class SubscriptionLinkTests {
 			b.tableName(db.getTableName());
 			b.key(Map.of(db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION)
+						.s(PrimaryKeySpec.INDICATOR_SUBSCRIPTION.getPrimaryKeyValue())
 						.build(),
 					db.getSortKey(),
 					AttributeValue.builder()
@@ -178,7 +179,7 @@ public class SubscriptionLinkTests {
 			b.tableName(db.getTableName());
 			b.key(Map.of(db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION_TEMP)
+						.s(PrimaryKeySpec.INDICATOR_SUBSCRIPTION_TEMP.getPrimaryKeyValue())
 						.build(),
 					db.getSortKey(),
 					AttributeValue.builder()
@@ -190,6 +191,14 @@ public class SubscriptionLinkTests {
 		
 		
 	}
+	
+	
+	@Autowired
+	EmailSHARemover esr;
+	
+	@Autowired
+	IndicatorSubscriptionRemover isr;
+	
 	
 	/**
 	 *  This test should not invoke and email
@@ -207,7 +216,7 @@ public class SubscriptionLinkTests {
 				.build();
 	
 		// add temp test subscription
-		UserSubscriptionSpec uss = new UserSubscriptionSpec(
+		IndicatorSubscription uss = new IndicatorSubscription(
 				"test-asset-unsubscribe", 
 				"unsubunittest@testemail.com", 
 				Map.of("ind", Map.of("prop1", 0.34)), 
@@ -221,7 +230,7 @@ public class SubscriptionLinkTests {
 		HashMap<String, AttributeValue> withKeys = new HashMap<>(attr);
 		withKeys.put(db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION)
+						.s(PrimaryKeySpec.INDICATOR_SUBSCRIPTION.getPrimaryKeyValue())
 						.build());
 		withKeys.put(db.getSortKey(),
 					AttributeValue.builder()
@@ -247,7 +256,7 @@ public class SubscriptionLinkTests {
 			p.item(Map.of(
 					db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_UNSUBSCRIBE)
+						.s(PrimaryKeySpec.INDICATOR_UNSUBSCRIBE.getPrimaryKeyValue())
 						.build(),
 					db.getSortKey(),
 					AttributeValue.builder()
@@ -270,7 +279,7 @@ public class SubscriptionLinkTests {
 			b.expressionAttributeValues(Map.of(
 					":" + db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_UNSUBSCRIBE)
+						.s(PrimaryKeySpec.INDICATOR_UNSUBSCRIBE.getPrimaryKeyValue())
 						.build(),
 					":email",
 					AttributeValue.builder()
@@ -294,12 +303,12 @@ public class SubscriptionLinkTests {
 		// get a subscription
 		Unsubscribe unsubClass = LocatorJ._get(Unsubscribe.class);
 		
-		List<UserSubscriptionSpec> usss = unsubClass.getUserSubscriptions();
+		List<IndicatorSubscription> usss = unsubClass.getUserSubscriptions();
 		assertThat("View should have only found a single subscription for unsubunittest@testemail.com.", usss.size(), Matchers.equalTo(1));
 		
 		// mocks user interaction - remove subscription
-		unsubClass.deleteSubscription(usss.get(0));
-		unsubClass.deleteEmailSHA(sha);
+		isr.deleteSubscription(usss.get(0));
+		esr.deleteEmailSHA(sha);
 		
 		Thread.sleep(2000); // let view do it thing.
 		
@@ -310,7 +319,7 @@ public class SubscriptionLinkTests {
 			b.key(Map.of(
 					db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_UNSUBSCRIBE)
+						.s(PrimaryKeySpec.INDICATOR_UNSUBSCRIBE.getPrimaryKeyValue())
 						.build(),
 					db.getSortKey(),
 					AttributeValue.builder()
@@ -328,7 +337,7 @@ public class SubscriptionLinkTests {
 			b.key(Map.of(
 					db.getPrimaryKey(),
 					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION)
+						.s(PrimaryKeySpec.INDICATOR_SUBSCRIPTION.getPrimaryKeyValue())
 						.build(),
 					db.getSortKey(),
 					AttributeValue.builder()

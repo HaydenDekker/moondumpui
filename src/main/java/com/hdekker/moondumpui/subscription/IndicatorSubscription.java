@@ -1,8 +1,7 @@
-package com.hdekker.moondumpui.dyndb.types;
+package com.hdekker.moondumpui.subscription;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * The required information for
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
  * @author Hayden Dekker
  *
  */
-public class UserSubscriptionSpec {
+public class IndicatorSubscription {
 
 	final String assetName;
 	final String email;
@@ -24,7 +23,7 @@ public class UserSubscriptionSpec {
 	final String interfaceName;
 	final List<Double> sampleRates;
 	
-	public UserSubscriptionSpec(String assetName, String email, Map<String, Map<String, Double>> indicatorConfig, String indicatorName,
+	public IndicatorSubscription(String assetName, String email, Map<String, Map<String, Double>> indicatorConfig, String indicatorName,
 			List<String> indicatorOrder, String interfaceName, List<Double> sampleRates) {
 		super();
 		this.assetName = assetName;

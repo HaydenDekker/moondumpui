@@ -1,19 +1,13 @@
 package com.hdekker.moondumpui.views.unsubscribe;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.atmosphere.interceptor.AtmosphereResourceStateRecovery.B;
-import org.slf4j.LoggerFactory;
-
-import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
-import com.hdekker.moondumpui.dyndb.Marshalling;
-import com.hdekker.moondumpui.dyndb.types.UserSubscriptionSpec;
-import com.hdekker.moondumpui.state.SessionState;
-import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
+import com.hdekker.moondumpui.dyndb.opps.EmailSHARemover;
+import com.hdekker.moondumpui.dyndb.opps.IndicatorSubscriptionRemover;
+import com.hdekker.moondumpui.dyndb.opps.UnsubscribeSubscriptionsProvider;
+import com.hdekker.moondumpui.subscription.IndicatorSubscription;
+import com.hdekker.moondumpui.views.AppBaseSinglePageCard;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.Icon;
@@ -24,79 +18,47 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 @Route("unsubscribe/:sha")
-public class Unsubscribe extends BaseDynamoDBSinglePageCard implements BeforeEnterObserver{
+public class Unsubscribe extends AppBaseSinglePageCard implements BeforeEnterObserver{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -9154203511996995740L;
 
 	String sha;
 	
-	Grid<UserSubscriptionSpec> uss = new Grid<>();
+	Grid<IndicatorSubscription> uss = new Grid<>();
 	
-	private List<UserSubscriptionSpec> userSubscriptions;
+	private List<IndicatorSubscription> userSubscriptions;
 
-	public List<UserSubscriptionSpec> getUserSubscriptions() {
+	public List<IndicatorSubscription> getUserSubscriptions() {
 		return userSubscriptions;
 	}
-
-	public void deleteSubscription(UserSubscriptionSpec uss) {
-		
-		client.deleteItem(b->{
-			
-			b.tableName(dbc.getTableName());
-			b.key(Map.of(
-				dbc.getPrimaryKey(),
-				AttributeValue.builder()
-					.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION)
-					.build(),
-				dbc.getSortKey(),
-				AttributeValue.builder()
-					.s(Marshalling.createSortKey().apply(uss))
-					.build()
-					
-			));
-			
-		});
-		
-	}
 	
-	public void deleteEmailSHA(String sha) {
-		
-		client.deleteItem(b->{
-			
-			b.tableName(dbc.getTableName());
-			b.key(Map.of(
-				dbc.getPrimaryKey(),
-				AttributeValue.builder()
-					.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_UNSUBSCRIBE)
-					.build(),
-				dbc.getSortKey(),
-				AttributeValue.builder()
-					.s(sha)
-					.build()
-					
-			));
-			
-		});
-	}
+	@Autowired
+	IndicatorSubscriptionRemover isr;
 
-	public Unsubscribe(DatabaseConfig dbc, SessionState state) {
-		super(dbc, state);
+	@Autowired
+	EmailSHARemover esr;
+
+	public Unsubscribe() {
+		super();
 		
-		uss.addColumn(UserSubscriptionSpec::getAssetName).setHeader("Asset");
-		uss.addColumn(UserSubscriptionSpec::getIndicatorName).setHeader("Indicator Name");
-		uss.addColumn(UserSubscriptionSpec::getSampleRates).setHeader("Sample Rates");
+		uss.addColumn(IndicatorSubscription::getAssetName).setHeader("Asset");
+		uss.addColumn(IndicatorSubscription::getIndicatorName).setHeader("Indicator Name");
+		uss.addColumn(IndicatorSubscription::getSampleRates).setHeader("Sample Rates");
 		
 		uss.addColumn(new ComponentRenderer<>(Button::new, (b, v)->{
 			
 			b.setIcon(new Icon(VaadinIcon.CLOSE_CIRCLE_O));
 			b.addClickListener((e)-> {
-				deleteSubscription(v);
+				isr.deleteSubscription(v);
 				userSubscriptions.remove(v);
 				uss.setItems(userSubscriptions);
 				if(userSubscriptions.size()==0) {
-					deleteEmailSHA(sha);
-					// TODO navigate somewhere
+					esr.deleteEmailSHA(sha);
 				}
 			});
 			
@@ -105,73 +67,22 @@ public class Unsubscribe extends BaseDynamoDBSinglePageCard implements BeforeEnt
 		add(uss);
 		
 	}
+	
+	@Autowired
+	UnsubscribeSubscriptionsProvider usp;
 
 	@Override
 	public void afterNavigation(AfterNavigationEvent event) {
 		
-		// get email
-		client.getItem(b->{
-			
-			LoggerFactory.getLogger(Unsubscribe.class)
-				.debug("Unsubscribe called for " + sha);
-			
-			b.tableName(dbc.getTableName());
-			b.key(Map.of(
-					dbc.getPrimaryKey(),
-					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_UNSUBSCRIBE)
-						.build(),
-					dbc.getSortKey(),
-					AttributeValue.builder()
-						.s(sha)
-						.build()
-					
-			));
-		})
-		
-		// get subscriptions
-		.thenComposeAsync(resp->{
-			
-			String email = resp.item().get("email").s();
-			
-			LoggerFactory.getLogger(Unsubscribe.class)
-				.debug(sha + " is associated with " + email);
-			
-			return client.query(builder->{
-				builder.tableName(dbc.getTableName());
-				builder.expressionAttributeValues(Map.of(
-					":pk",
-					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION)
-						.build(),
-						":skval",
-					AttributeValue.builder()
-						.s(email)
-						.build()
-					
-					));
-				builder.keyConditionExpression(dbc.getPrimaryKey() + " = :pk and begins_with(" + dbc.getSortKey() + ", :skval)");
-			});
-			
-		})
-		.thenAccept(resp->{
+	
+		usp.getSubscriptionsForUnsubSHA(sha)
+		.subscribe(list->{
 			
 			uss.getUI()
 			.get()
 			.access(()->{
-				
-				List<UserSubscriptionSpec> usss = resp.items()
-					.stream()
-					.map(item->Marshalling.databaseMapToUserSubscriptionSpec.apply(item))
-					.collect(Collectors.toList());
-				
-				LoggerFactory.getLogger(Unsubscribe.class)
-					.debug(" and has " + usss.size() + " subscriptions associated with it.");
-				
-				// for observations
-				userSubscriptions = usss;
-				
-				uss.setItems(usss);
+
+				uss.setItems(list);
 				uss.getUI()
 					.get()
 					.push();

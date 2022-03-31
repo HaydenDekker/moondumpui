@@ -1,20 +1,17 @@
 package com.hdekker.moondumpui.views.onboard;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
-import com.hdekker.moondumpui.state.SessionState;
-import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
+import com.hdekker.moondumpui.dyndb.opps.TemporaryIndicatorSubscriptionAdder;
+import com.hdekker.moondumpui.dyndb.opps.UnsubscribeLinkAdder;
+import com.hdekker.moondumpui.subscription.IndicatorSubscription;
+import com.hdekker.moondumpui.views.AppBaseSinglePageCard;
+import com.hdekker.moondumpui.views.state.SessionState;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
@@ -23,18 +20,33 @@ import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.Route;
 
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.PutItemResponse;
 import software.amazon.awssdk.services.ses.SesAsyncClient;
 
 @Route("emailer")
-public class Emailer extends BaseDynamoDBSinglePageCard{
+public class Emailer extends AppBaseSinglePageCard{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5959940866416029847L;
 	SesAsyncClient emailer;
 	
-	public Emailer(DatabaseConfig dbc, SessionState state) {
-		super(dbc, state);
+	@Autowired
+	DatabaseConfig dbc;
+	
+	@Autowired
+	SessionState state;
+	
+	@Autowired
+	TemporaryIndicatorSubscriptionAdder tisa;
+	
+	@Autowired
+	UnsubscribeLinkAdder usla;
+	
+	public Emailer() {
+		super();
 		
+		// TODO move email logic
 		emailer = SesAsyncClient.builder()
 		.region(Region.of(dbc.getEmailRegion()))
 		.build();
@@ -48,87 +60,32 @@ public class Emailer extends BaseDynamoDBSinglePageCard{
 		submit.addClickListener((e)->{
 			
 			if(emailField.isInvalid()) {
-				emailField.setErrorMessage("requires a valid email, ay.");
+				emailField.setErrorMessage("requires a valid email.");
 				emailField.setInvalid(true);
 				return;
 			}
 			
 			state.setEmail(Optional.of(emailField.getValue()));
 			
-			state.setIndicatorApplicationOrder(
-					Optional.of(
-						List.of(state.getTransformName().get(),
-						state.getAlertName().get()))
-			);
-			
 			UUID uuid = UUID.randomUUID();
 			
-			CompletableFuture<PutItemResponse> resp = client.putItem(builder->{
-				
-				ObjectMapper om = new ObjectMapper();
-				
-				String propStr = "";
-				try {
-					propStr = om.writeValueAsString(state.getProperties().get());
-				} catch (JsonProcessingException er) {
-					er.printStackTrace();
-				}
-				
-				builder.tableName(dbc.getTableName());
-				builder.item(Map.of(
-					dbc.getPrimaryKey(),
-					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION_TEMP)
-						.build(),
-					dbc.getSortKey(),
-					AttributeValue.builder()
-						.s(uuid.toString())
-						.build(),
-					"interfaceName",
-					AttributeValue.builder()
-						.s(state.getInterfaceName().get())
-						.build(),
-					"assetName",
-					AttributeValue.builder()
-						.s(state.getAssetName().get())
-						.build(),
-					"indicatorConfig",
-					AttributeValue.builder()
-						.s(propStr)
-						.build(),
-					"indicatorOrder",
-					AttributeValue.builder()
-						.l(
-							state.getIndicatorApplicationOrder()
-								.get()
-								.stream()
-								.map(ind->AttributeValue.builder()
-										.s(ind)
-										.build())
-							.collect(Collectors.toList()))
-						.build(),	
-					"indicatorName",
-					AttributeValue.builder()
-						.s(state.getIndicatorName().get())
-						.build(),
-				    "email",
-						AttributeValue.builder()
-							.s(state.getEmail().get())
-							.build(),
-					"sampleRates",
-					AttributeValue.builder()
-						.ns(state.getAssetSampleRateMinutes()
-								.get()
-								.stream()
-								.map(n->n.toString())
-								.collect(Collectors.toList()))
-						.build()
-					
-				));
-	
-			});
+			IndicatorSubscription is = new IndicatorSubscription(
+					state.getAssetName().get(), 
+					state.getEmail().get(), 
+					state.getProperties().get(), 
+					state.getIndicatorName().get(), 
+					state.getIndicatorApplicationOrder()
+					.get(), 
+					state.getInterfaceName().get(), 
+					state.getAssetSampleRateMinutes()
+					.get()
+					.stream()
+					.map(i->i.doubleValue())
+					.collect(Collectors.toList()));
 			
-			addUnsublinkForEmail(state.getEmail().get());
+			tisa.add(uuid.toString(), is);
+			
+			usla.add(state.getEmail().get());
 			
 			emailer.sendEmail(b->{
 				
@@ -154,32 +111,6 @@ public class Emailer extends BaseDynamoDBSinglePageCard{
 			
 			UI.getCurrent().navigate(EmailerAuthSent.class);
 			
-		});
-		
-	}
-	
-	public void addUnsublinkForEmail(String email) {
-		
-		String sha = DigestUtils.sha256Hex(dbc.getAppAdminEmail());
-		
-		client.putItem(p->{
-			
-			p.tableName(dbc.getTableName());
-			p.item(Map.of(
-					dbc.getPrimaryKey(),
-					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_UNSUBSCRIBE)
-						.build(),
-					dbc.getSortKey(),
-					AttributeValue.builder()
-						.s(sha)
-						.build(),
-					"email",
-					AttributeValue.builder()
-						.s(email)
-						.build()
-					
-			));
 		});
 		
 	}

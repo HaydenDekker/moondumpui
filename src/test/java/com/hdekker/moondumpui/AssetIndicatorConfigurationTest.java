@@ -1,18 +1,15 @@
 package com.hdekker.moondumpui;
 
 import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
+import com.hdekker.moondumpui.dyndb.PrimaryKeySpec;
 
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
@@ -72,7 +69,7 @@ public class AssetIndicatorConfigurationTest {
 			builder.item(Map.of(
 				dbc.getPrimaryKey(),
 				AttributeValue.builder()
-					.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION)
+					.s(PrimaryKeySpec.INDICATOR_SUBSCRIPTION.getPrimaryKeyValue())
 					.build(),
 				dbc.getSortKey(),
 				AttributeValue.builder()

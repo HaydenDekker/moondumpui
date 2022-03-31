@@ -1,49 +1,43 @@
 package com.hdekker.moondumpui.views.admin;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.dyndb.types.UserSubscriptionSpec;
-import com.hdekker.moondumpui.state.SessionState;
-import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
+import com.hdekker.moondumpui.dyndb.opps.IndicatorStateProvider;
+import com.hdekker.moondumpui.subscription.IndicatorSubscription;
+import com.hdekker.moondumpui.views.AppBaseSinglePageCard;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.BatchGetItemResponse;
-import software.amazon.awssdk.services.dynamodb.model.KeysAndAttributes;
-
 
 @Route("indicator-details")
-public class IndicatorDetails extends BaseDynamoDBSinglePageCard implements BeforeEnterObserver{
+public class IndicatorDetails extends AppBaseSinglePageCard implements BeforeEnterObserver{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5806665591718811452L;
 
 	@Autowired
 	StateAdminWorkflow stateAdminWorkflow;
 	
 	VerticalLayout holder = new VerticalLayout();
 	
-	public IndicatorDetails(DatabaseConfig dbc, SessionState state) {
-		super(dbc, state);
+	@Autowired
+	IndicatorStateProvider isp;
+	
+	public IndicatorDetails() {
+		super();
 		
 		add(holder);
 		
@@ -60,7 +54,7 @@ public class IndicatorDetails extends BaseDynamoDBSinglePageCard implements Befo
 	@Override
 	public void afterNavigation(AfterNavigationEvent event) {
 		
-		UserSubscriptionSpec uss = stateAdminWorkflow.getUss().get();
+		IndicatorSubscription uss = stateAdminWorkflow.getUss().get();
 		
 		holder.add(getItem("asset", uss.getAssetName()));
 		holder.add(getItem("interface", uss.getInterfaceName()));
@@ -71,70 +65,32 @@ public class IndicatorDetails extends BaseDynamoDBSinglePageCard implements Befo
 		holder.add(getItem("indicator config", uss.getIndicatorConfig().toString()));
 		
 		// sample rate will require unique keys
-		List<String> itemKeys = uss.getSampleRates()
+		List<String> itemSortKeys = uss.getSampleRates()
 										.stream()
 										.map(d-> Duration.ofMinutes(d.longValue()).toString())
 										.map(dur-> uss.getAssetName() + "-" + dur + "-" + uss.getIndicatorName())
 										.collect(Collectors.toList());
 		
-		List<Map<String, AttributeValue>> keys = itemKeys.stream()
-			.map(k->
-				Map.of(
-						"PK", 
-						AttributeValue
-							.builder()
-							.s("IAttr")
-							.build(),
-						"SK", 
-						AttributeValue
-							.builder()
-							.s(k)
-							.build()
-						)
-	
-			).collect(Collectors.toList());
-		
-		CompletableFuture<BatchGetItemResponse> res = client.batchGetItem(builder->{
-			
-			builder.requestItems(Map.of(dbc.getTableName(),
-						KeysAndAttributes.builder()
-							.keys(keys)
-							.build()
-			));
-			
-		});
-		
-		ObjectMapper om = new ObjectMapper();
-		om.registerModule(new JavaTimeModule());
-		
-		// recieve db state
-		res.thenAccept(c->{
-			
-			holder.getUI().get()
-				.access(()->{
-					
-					c.responses().get(dbc.getTableName())
-					.stream()
-					.forEach(item->{
-						
-						holder.add(getItem("state", item.get("indResultState").s()));
-						
-						LocalDateTime val = null;
-						try {
-							val = om.readValue(item.get("inputSampleDate").s(), LocalDateTime.class);
-						} catch (JsonProcessingException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						
-						holder.add(getItem("last state update", val.format(DateTimeFormatter.ofPattern("dd MMM uuuu"))));
-			
+		isp.getIndicatorDetails(itemSortKeys)
+			.subscribe(l->{
+				
+				List<VerticalLayout> items = l.stream()
+					.flatMap(ind->{
+						VerticalLayout state = getItem("state", ind.getStateJSON());
+						VerticalLayout date = getItem("last state update", ind.getLastUpdated()
+								.format(DateTimeFormatter.ofPattern("dd MMM uuuu")));
+						return Arrays.asList(state, date)
+								.stream();
+					})
+					.collect(Collectors.toList());
+				
+				holder.getUI().get()
+					.access(()->{
+						items.forEach(i-> holder.add(i));
+						holder.getUI().get().push();
 					});
-					holder.getUI().get().push();
-					
-				});
-			
-		});
+				
+			});
 				
 	}
 	

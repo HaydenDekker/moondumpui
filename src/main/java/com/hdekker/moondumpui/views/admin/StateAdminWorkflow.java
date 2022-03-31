@@ -2,7 +2,7 @@ package com.hdekker.moondumpui.views.admin;
 
 import java.util.Optional;
 
-import com.hdekker.moondumpui.dyndb.types.UserSubscriptionSpec;
+import com.hdekker.moondumpui.subscription.IndicatorSubscription;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
 
@@ -22,13 +22,13 @@ public class StateAdminWorkflow {
 
 
 
-	Optional<UserSubscriptionSpec> uss = Optional.empty();
+	Optional<IndicatorSubscription> uss = Optional.empty();
 	
-	public Optional<UserSubscriptionSpec> getUss() {
+	public Optional<IndicatorSubscription> getUss() {
 		return uss;
 	}
 
-	public void setUss(Optional<UserSubscriptionSpec> uss) {
+	public void setUss(Optional<IndicatorSubscription> uss) {
 		this.uss = uss;
 	}
 	

@@ -2,15 +2,13 @@ package com.hdekker.moondumpui.views.onboard;
 
 import java.util.Optional;
 
-import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.state.SessionState;
-import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
-import com.vaadin.flow.component.Text;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.hdekker.moondumpui.views.AppBaseSinglePageCard;
+import com.hdekker.moondumpui.views.state.SessionState;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -18,10 +16,18 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
 @Route("summary")
-public class Summary extends BaseDynamoDBSinglePageCard implements BeforeEnterObserver{
+public class Summary extends AppBaseSinglePageCard implements BeforeEnterObserver{
 
-	public Summary(DatabaseConfig dbc, SessionState state) {
-		super(dbc, state);
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6670224329043595734L;
+
+	@Autowired
+	SessionState state;
+	
+	public Summary() {
+		super();
 		
 		add(new H2("Name Indicator Alert"));
 		

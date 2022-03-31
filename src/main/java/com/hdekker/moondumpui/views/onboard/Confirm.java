@@ -1,15 +1,11 @@
 package com.hdekker.moondumpui.views.onboard;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.dyndb.DynDBKeysAndAttributeNamesSpec;
-import com.hdekker.moondumpui.dyndb.Marshalling;
-import com.hdekker.moondumpui.dyndb.types.UserSubscriptionSpec;
-import com.hdekker.moondumpui.dyndb.types.UserSubscriptionSpecStoreSpec;
-import com.hdekker.moondumpui.state.SessionState;
-import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
+import com.hdekker.moondumpui.dyndb.opps.IndicatorSubscriptionAdder;
+import com.hdekker.moondumpui.dyndb.opps.TemporaryIndicatorSubscriptionProvider;
+import com.hdekker.moondumpui.dyndb.opps.TemporaryIndicatorSubscriptionRemover;
+import com.hdekker.moondumpui.views.AppBaseSinglePageCard;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.router.AfterNavigationEvent;
@@ -17,23 +13,35 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 
 @Route("confirm/:uuid")
-public class Confirm extends BaseDynamoDBSinglePageCard implements BeforeEnterObserver{
+public class Confirm extends AppBaseSinglePageCard implements BeforeEnterObserver{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5484909023889547625L;
 
 	String uuid;
 	
 	Div holder = new Div();
 	
-	public Confirm(DatabaseConfig dbc, SessionState state) {
-		super(dbc, state);
+	public Confirm() {
+		super();
 		
 		holder.add(new H2("confirming subscription..."));
 		add(holder);
 		
 	}
+	
+	@Autowired
+	TemporaryIndicatorSubscriptionProvider tisp;
+	
+	@Autowired
+	IndicatorSubscriptionAdder usa;
+	
+	@Autowired
+	TemporaryIndicatorSubscriptionRemover tisr;
 
 	@Override
 	public void afterNavigation(AfterNavigationEvent event) {
@@ -45,66 +53,18 @@ public class Confirm extends BaseDynamoDBSinglePageCard implements BeforeEnterOb
 			e.printStackTrace();
 		}
 		
-		CompletableFuture<GetItemResponse> respOfCheckForPendingConfirmation = client.getItem(b->{
-			b.tableName(dbc.getTableName());
-			b.key(Map.of(
-					dbc.getPrimaryKey(),
-					AttributeValue.builder()
-						.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION_TEMP)
-						.build(),
-					dbc.getSortKey(),
-					AttributeValue.builder()
-						.s(uuid)
-						.build()
-			));
-			
-		});
-		
-		respOfCheckForPendingConfirmation.thenAccept(resp->{
-			
-			if(resp.hasItem()==false) return;
-			
-			UserSubscriptionSpec uss = Marshalling.databaseMapToUserSubscriptionSpec
-				.apply(resp.item());
-			
-			UserSubscriptionSpecStoreSpec usss = new UserSubscriptionSpecStoreSpec(
-						uss, 
-						dbc.getPrimaryKey(), 
-						dbc.getSortKey());
-
-			client.putItem(b->{
-				
-				b.tableName(dbc.getTableName());
-				b.item(Marshalling.convertToSubscriptionMap()
-							.apply(usss));
-				
-			});
-			
-			client.deleteItem(b->{
-				
-				b.tableName(dbc.getTableName());
-				b.key(Map.of(
-						dbc.getPrimaryKey(),
-						AttributeValue.builder()
-							.s(DynDBKeysAndAttributeNamesSpec.INDICATOR_SUBSCRIPTION_TEMP)
-							.build(),
-						dbc.getSortKey(),
-						AttributeValue.builder()
-							.s(uuid)
-							.build()));
-				
-			});
-			
-			holder.getUI().get()
-				.access(()->{
-					
-					holder.removeAll();
-					holder.add(new H2("Success, your indicator is added and will message your email from time to time. Make sure you set to vibrate so you don't miss out."));
-					holder.getUI().get().push();
-					
-			});
-			
-			
+		tisp.getSubscription(uuid)
+			.map(is->usa.addUserSubscription(is))
+			.map(is->tisr.remove(uuid))
+			.subscribe(r->{
+				holder.getUI().get()
+					.access(()->{
+						
+						holder.removeAll();
+						holder.add(new H2("Success, your indicator is added and will message your email from time to time. Make sure you set to vibrate so you don't miss out."));
+						holder.getUI().get().push();
+						
+				});
 		});
 		
 	}

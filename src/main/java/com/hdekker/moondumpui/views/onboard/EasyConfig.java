@@ -4,9 +4,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.state.SessionState;
-import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.hdekker.moondumpui.views.AppBaseSinglePageCard;
+import com.hdekker.moondumpui.views.state.SessionState;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
@@ -16,10 +17,18 @@ import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.Route;
 
 @Route("easy-config")
-public class EasyConfig extends BaseDynamoDBSinglePageCard {
+public class EasyConfig extends AppBaseSinglePageCard {
 
-	public EasyConfig(DatabaseConfig dbc, SessionState state) {
-		super(dbc, state);
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8644995107677022132L;
+
+	@Autowired
+	SessionState state;
+	
+	public EasyConfig() {
+		super();
 		
 		Label getStarted = new Label("Please choose from the following two options. You can quickly and easily sign up to a bitcoin buy indicator or get your hands dirty and create a customised indicator yourself."); 
 		
@@ -28,7 +37,6 @@ public class EasyConfig extends BaseDynamoDBSinglePageCard {
 			
 			// TODO how do I make this resiliant with core component
 			// 4.0 should allow core to define pre configured indicators for selection.
-			state.setAlertName(Optional.of("Alert-ALERT_THRESHOLD_BELOW"));
 			state.setAssetName(Optional.of("bitcoin"));
 			state.setAssetSampleRateMinutes(Optional.of(List.of(24*60)));
 			
@@ -39,7 +47,6 @@ public class EasyConfig extends BaseDynamoDBSinglePageCard {
 			
 			state.setIndicatorName(Optional.of("bitcoin daily"));
 			state.setInterfaceName(Optional.of("coin-geko"));
-			state.setTransformName(Optional.of("Transform-TRANSFORM_RSI"));
 			
 			UI.getCurrent().navigate(Emailer.class);
 			

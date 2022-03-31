@@ -1,4 +1,4 @@
-package com.hdekker.moondumpui.state;
+package com.hdekker.moondumpui.views.state;
 
 import java.util.HashMap;
 import java.util.List;
@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import org.springframework.web.context.annotation.SessionScope;
 
+import com.hdekker.moondumpui.views.onboard.alerts.AlertDescriptor;
+import com.hdekker.moondumpui.views.onboard.transform.TransformDescriptor;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 
 @SpringComponent
@@ -68,24 +70,24 @@ public class SessionState {
 		this.indicatorName = indicatorName;
 	}
 	
-	Optional<String> alertName = Optional.empty();
-
-	public Optional<String> getAlertName() {
-		return alertName;
+	Optional<AlertDescriptor> alertDescriptor = Optional.empty();
+	
+	public Optional<AlertDescriptor> getAlertDescriptor() {
+		return alertDescriptor;
 	}
-	public void setAlertName(Optional<String> alertName) {
-		this.alertName = alertName;
+	public void setAlertDescriptor(Optional<AlertDescriptor> alertDescriptor) {
+		this.alertDescriptor = alertDescriptor;
 	}
 	
-	Optional<String> transformName = Optional.empty();
-	
-	public Optional<String> getTransformName() {
-		return transformName;
-	}
-	public void setTransformName(Optional<String> transformName) {
-		this.transformName = transformName;
-	}
+	Optional<TransformDescriptor> transformDescriptor = Optional.empty();
 
+	public Optional<TransformDescriptor> getTransformDescriptor() {
+		return transformDescriptor;
+	}
+	public void setTransformDescriptor(Optional<TransformDescriptor> transformDescriptor) {
+		this.transformDescriptor = transformDescriptor;
+	}
+	
 	Optional<String> email = Optional.empty();
 
 	public Optional<String> getEmail() {

@@ -5,23 +5,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.hdekker.moondumpui.dyndb.DatabaseConfig;
-import com.hdekker.moondumpui.state.SessionState;
-import com.hdekker.moondumpui.views.BaseDynamoDBSinglePageCard;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.hdekker.moondumpui.views.AppBaseSinglePageCard;
+import com.hdekker.moondumpui.views.state.SessionState;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
 @Route("sample-rates")
-public class SampleRates extends BaseDynamoDBSinglePageCard implements BeforeEnterObserver {
+public class SampleRates extends AppBaseSinglePageCard implements BeforeEnterObserver {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1622352547024541246L;
 	static final Map<String, Integer> textMap = Map.of(
 			"1 hour", 1*60,
 			"2 hour", 2*60,
@@ -29,9 +32,11 @@ public class SampleRates extends BaseDynamoDBSinglePageCard implements BeforeEnt
 			"Daily", 24*60
 			);
 			
-
-	public SampleRates(DatabaseConfig dbc, SessionState state) {
-		super(dbc, state);
+	@Autowired
+	SessionState state;
+	
+	public SampleRates() {
+		super();
 		
 		add(new H2("Select Samples Rates"));
 		
@@ -53,6 +58,9 @@ public class SampleRates extends BaseDynamoDBSinglePageCard implements BeforeEnt
 						.map(item->textMap.get(item))
 						.collect(Collectors.toList())
 			));
+			
+			// save
+			
 			
 			UI.getCurrent().navigate(Summary.class);
 			
